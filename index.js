@@ -15,3 +15,4 @@ app.use(router.routes())
    .use(router.allowedMethods());
 
 app.listen(conf.port, conf.host);
+console.log(`app listen at ${port}`)
