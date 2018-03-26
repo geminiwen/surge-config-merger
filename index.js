@@ -14,4 +14,4 @@ var router = controllerRoutes(new Router());
 app.use(router.routes())
    .use(router.allowedMethods());
 
-app.listen(9991);
+app.listen(conf.port, conf.host);
