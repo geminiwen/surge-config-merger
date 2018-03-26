@@ -1,0 +1,12 @@
+export default {
+  "MANAGED-CONFIG": "http://localhost:9991/",
+  "source": {
+    "gemini": "Anti-GFW.conf"
+  },
+  "remote": {
+    "gemini": [{
+      "name": "CordCloud",
+      "url": "https://www.example.com/surge.conf"
+    }]
+  }
+}
