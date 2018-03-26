@@ -12,7 +12,14 @@ export default class IndexController {
 
   fetch = async (ctx) => {
 
-    let user = Buffer.from(ctx.query['u'], 'base64').toString()
+    let queryU = ctx.query['u']
+
+    if (!queryU) {
+      ctx.status = 401;
+      return;
+    }
+
+    let user = Buffer.from(queryU, 'base64').toString()
 
     if (!conf['source'][user]) {
       ctx.status = 401;
@@ -51,7 +58,7 @@ export default class IndexController {
     } catch(e) {
       console.error(e);
     }
-
+    ctx.cacheControl = {public:true, maxAge: 60}
     ctx.body = `#!MANAGED-CONFIG ${conf['MANAGED-CONFIG']}?u=${ctx.query['u']}\n${ini.stringify(targetSurge)}`
   }
 
