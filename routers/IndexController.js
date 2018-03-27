@@ -33,7 +33,7 @@ export default class IndexController {
       let {data} = await axios(sourcePath);
       baseSurge = ini.parse(data) 
     } else {
-      let sourceLocalPath = path.resolve(__dirname, `../surge/${conf['source'][user]}`)
+      let sourceLocalPath = path.resolve(__dirname, '../surge/', sourcePath)
       baseSurge = ini.parse(fs.readFileSync(sourceLocalPath, 'utf-8'))
     }
 
