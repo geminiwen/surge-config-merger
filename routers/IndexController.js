@@ -37,24 +37,21 @@ export default class IndexController {
       baseSurge = ini.parse(fs.readFileSync(sourceLocalPath, 'utf-8'))
     }
 
-    let index = 0
     let remoteConfigs = conf['remote'][user];
-    let remoteConfig = remoteConfigs[index]
     let targetSurge = { ...baseSurge }
-
     
     try {
-      let remoteConfigName = remoteConfig['name']
-      let {data} = await axios(remoteConfig['url'])
-      let remoteSurge = ini.parse(data);
-      let targeProxyGroup = targetSurge['Proxy Group']
+      remoteConfigs.forEach(remoteConfig => {
+        let remoteConfigName = remoteConfig['name']
+        let {data} = await axios(remoteConfig['url'])
+        let remoteSurge = ini.parse(data);
+        let targeProxyGroup = targetSurge['Proxy Group']
 
-      targetSurge['Proxy'] = this.bumpProxy(baseSurge['Proxy'], remoteSurge['Proxy'])
-      // TODO 策略选择 不一定是 url-test
-      targeProxyGroup[remoteConfigName] = `url-test, ${this.bumpProxyGroup(remoteSurge['Proxy'])}, url = http://www.google.com/generate_204`
-
+        targetSurge['Proxy'] = this.bumpProxy(baseSurge['Proxy'], remoteSurge['Proxy'])
+        // TODO 策略选择 不一定是 url-test
+        targeProxyGroup[remoteConfigName] = `url-test, ${this.bumpProxyGroup(remoteSurge['Proxy'])}, url = http://www.google.com/generate_204`
+      })
       targetSurge['Proxy Group'] = this.bumpRemoteGroupName(targeProxyGroup, remoteConfigs);
-
     } catch(e) {
       console.error(e);
     }
