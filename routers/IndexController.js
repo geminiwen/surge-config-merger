@@ -47,7 +47,7 @@ export default class IndexController {
         let {data} = await axios(remoteConfig['url'])
         let remoteSurge = ini.parse(data);
 
-        targetSurge['Proxy'] = this.bumpProxy(baseSurge['Proxy'], remoteSurge['Proxy'])
+        targetSurge['Proxy'] = this.bumpProxy(targetSurge['Proxy'], remoteSurge['Proxy'])
         // TODO 策略选择 不一定是 url-test
         targeProxyGroup[remoteConfigName] = `url-test, ${this.bumpProxyGroup(remoteSurge['Proxy'])}, url = http://www.google.com/generate_204`
     
