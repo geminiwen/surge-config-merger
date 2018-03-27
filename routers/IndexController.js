@@ -39,13 +39,12 @@ export default class IndexController {
 
     let remoteConfigs = conf['remote'][user];
     let targetSurge = { ...baseSurge }
-    
+    let targeProxyGroup = targetSurge['Proxy Group']
     try {
       remoteConfigs.forEach(async remoteConfig => {
         let remoteConfigName = remoteConfig['name']
         let {data} = await axios(remoteConfig['url'])
         let remoteSurge = ini.parse(data);
-        let targeProxyGroup = targetSurge['Proxy Group']
 
         targetSurge['Proxy'] = this.bumpProxy(baseSurge['Proxy'], remoteSurge['Proxy'])
         // TODO 策略选择 不一定是 url-test
