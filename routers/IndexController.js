@@ -41,7 +41,8 @@ export default class IndexController {
     let targetSurge = { ...baseSurge }
     let targeProxyGroup = targetSurge['Proxy Group']
     try {
-      remoteConfigs.forEach(async remoteConfig => {
+      for (let i = 0; i < remoteConfigs.length; i ++) {
+        let remoteConfig = remoteConfigs[i]
         let remoteConfigName = remoteConfig['name']
         let {data} = await axios(remoteConfig['url'])
         let remoteSurge = ini.parse(data);
@@ -49,7 +50,9 @@ export default class IndexController {
         targetSurge['Proxy'] = this.bumpProxy(baseSurge['Proxy'], remoteSurge['Proxy'])
         // TODO 策略选择 不一定是 url-test
         targeProxyGroup[remoteConfigName] = `url-test, ${this.bumpProxyGroup(remoteSurge['Proxy'])}, url = http://www.google.com/generate_204`
-      })
+    
+      }
+      
       targetSurge['Proxy Group'] = this.bumpRemoteGroupName(targeProxyGroup, remoteConfigs);
     } catch(e) {
       console.error(e);
