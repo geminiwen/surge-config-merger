@@ -41,7 +41,7 @@ export default class IndexController {
     let targetSurge = { ...baseSurge }
     
     try {
-      remoteConfigs.forEach(remoteConfig => {
+      remoteConfigs.forEach(async remoteConfig => {
         let remoteConfigName = remoteConfig['name']
         let {data} = await axios(remoteConfig['url'])
         let remoteSurge = ini.parse(data);
