@@ -1,5 +1,5 @@
 # surge-config-merger
-merge your surge config from remote.
+When you have multi proxy servers which provide surge managed configuration. You can use this tool to merge your configurations.
 
 # How
 1. `npm i`
