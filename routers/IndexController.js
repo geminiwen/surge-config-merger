@@ -4,6 +4,8 @@ import fs from 'fs'
 import path from 'path'
 import conf from '../conf'
 import axios from 'axios'
+import rules from '../rules'
+import base64 from 'base64-stream'
 
 export default class IndexController {
   constructor(router) {
@@ -13,6 +15,7 @@ export default class IndexController {
   fetch = async (ctx) => {
 
     let queryU = ctx.query['u']
+    let gfw = ctx.query['gfw']
 
     if (!queryU) {
       ctx.status = 401;
@@ -54,6 +57,22 @@ export default class IndexController {
       }
       
       targetSurge['Proxy Group'] = this.bumpRemoteGroupName(targeProxyGroup, remoteConfigs);
+      let gfwListResponse = await axios({
+        method:'get',
+        url:'https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt',
+        responseType:'stream'
+      })
+
+      if (gfw) {
+        let rule = await rules(gfwListResponse.data.pipe(base64.decode()), 'Proxy')
+        rule = rule.reduce((map, item) => {
+          map[item] = null
+          return map
+        }, {})
+
+        targetSurge['Rule'] = rule
+      }
+
     } catch(e) {
       console.error(e);
     }
