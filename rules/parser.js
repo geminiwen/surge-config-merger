@@ -1,4 +1,4 @@
-const {URL} = require('url')
+const url = require('url')
 const through2 = require("through2")
 const fs = require("fs")
 
@@ -15,8 +15,8 @@ function getHostName(domain) {
         domain = "http://" + domain
     }
     try {
-        let url = new URL(domain)
-        return url.hostname
+        let targetUrl = url.parse(domain);
+        return targetUrl.hostname
     } catch (e) {
         // Nothings
     }
