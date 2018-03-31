@@ -4,7 +4,7 @@ const fs = require("fs")
 
 const path = require("path")
 
-let tlds = new Set(fs.readFileSync(path.resolve(__dirname, './tld.txt'), "utf-8").split("\n"))
+let tlds = new Set(fs.readFileSync(path.resolve(__dirname, '../surge', './tld.txt'), "utf-8").split("\n"))
 
 var Parser = function () {
     this.domains = new Set();

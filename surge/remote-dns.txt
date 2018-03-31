@@ -1,0 +1,25 @@
+# domain keyword
+
+.*ampproject\.org.*
+.*twitpic.*
+.*facebook.*
+.*twitter.*
+.*goo\.gl.*
+.*instagram.*
+
+# domain suffix
+twimg\.com$
+googleapis\.com$
+fbcdn\.net$
+fb\.com$
+fb\.me$
+appspot\.com$
+youtube\.com$
+scdn\.co$
+nflxvideo\.net$
+gstatic\.com$
+g\.co$
+
+# domain
+^fast\.com$
+^accounts\.google\.com$

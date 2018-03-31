@@ -1,31 +1,24 @@
-const Parser = require("./parser")
-const through2 = require("through2")
-const Promise = require("bluebird")
+import Parser from './parser'
+import through2 from 'through2'
+import Promise from 'bluebird'
+import split2 from 'split2'
+import fs from 'fs'
+import path from 'path'
 
-function readlineTransform() {
-    let buffer = '';
-    return through2.obj(function(chunk, enc, cb) {
-        if (Buffer.isBuffer(chunk)) {
-            chunk = chunk.toString('utf8')
+
+let forceRemoteDns = fs.readFileSync(path.resolve(__dirname, "../surge", "./remote-dns.txt"), "utf-8").split("\n")
+    .reduce((array,item) => {
+        let domain = item.trim();
+        if (!domain.startsWith('#') && domain.length > 0) {
+            array.push(new RegExp(item));
         }
-        buffer += chunk;
-        let idx = buffer.indexOf("\n");
-        let line;
-        while (idx > -1) {
-            idx++;
-            line = buffer.substring(0, idx);
-            buffer = buffer.substring(idx);
-            idx = buffer.indexOf("\n");
-            line = line.trim();
-            if (line.length > 0) this.push(line);
-        }
-        cb();
-    });
-}
+        return array
+    }, [])
 
 function transformToSurge(rule) {
     return through2.obj(function(domain, enc, cb) {
-        this.push(`DOMAIN-SUFFIX,${domain},${rule}`)
+        let shouldForceRemoteDns = forceRemoteDns.reduce((result, item) => (result || item.test(domain)), false)
+        this.push(`DOMAIN-SUFFIX,${domain},${rule}${shouldForceRemoteDns? ',force-remote-dns' : ''}`)
         cb();
     })
 }
@@ -35,7 +28,7 @@ module.exports = exports = function (source, rule) {
     let group = [];
     return new Promise(function (resolve, reject) {
         source
-        .pipe(readlineTransform())
+        .pipe(split2())
         .pipe(parser.process())
         .pipe(parser.filter())
         .pipe(transformToSurge(rule))
