@@ -53,17 +53,27 @@ export default class IndexController {
       )
       .reduce((targetProxy, remoteSurge) => this.bumpProxy(targetProxy, remoteSurge['Proxy']), targetSurge['Proxy'])
 
-      let gfwListPromise = Promise.resolve(
-        axios({
-          method:'get',
-          url:'https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt',
-          responseType:'stream'
-        })
-        .then(response => rules(response.data.pipe(base64.decode()), userConfig['proxyRule']))
-      )
-      .reduce((data, item) => (data[item] = null, data), {})
+      let works = [proxyPromise]
+      let originalRules = targetSurge['Rule']
+      
+      if (gfw) {
+        let gfwListPromise = Promise.resolve(
+          axios({
+            method:'get',
+            url:'https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt',
+            responseType:'stream'
+          })
+          .then(response => rules(response.data.pipe(base64.decode()), userConfig['proxyRule']))
+        )
+        .reduce((data, item) => (data[item] = null, data), {})
+        .then(rules => ({...rules, ...originalRules}))
 
-      let [proxy, rule] = await Promise.all([proxyPromise, gfwListPromise])
+        works.push(gfwListPromise)
+      } else {
+        works.push(originalRules)
+      }
+
+      let [proxy, rule] = await Promise.all(works)
       targetSurge['Proxy'] = proxy
       targetSurge['Proxy Group'] = this.bumpRemoteGroupName(targeProxyGroup, remoteConfigs);
       targetSurge['Rule'] = rule
@@ -72,7 +82,11 @@ export default class IndexController {
       console.error(e);
     }
     ctx.cacheControl = {public:true, maxAge: 60}
-    ctx.body = `#!MANAGED-CONFIG ${conf['MANAGED-CONFIG']}?u=${ctx.query['u']}\n${ini.stringify(targetSurge)}`
+    ctx.body = [
+                `#!MANAGED-CONFIG ${conf['MANAGED-CONFIG']}`, 
+                `?u=${ctx.query['u']}${gfw ? "&gfw=true": ""}\n`,
+                `${ini.stringify(targetSurge)}`
+               ].join('')
   }
 
   bumpRemoteGroupName = (base, configs) => {
