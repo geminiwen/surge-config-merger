@@ -6,6 +6,7 @@ import conf from '../conf'
 import axios from 'axios'
 import rules from '../rules'
 import base64 from 'base64-stream'
+import Promise from 'bluebird'
 
 export default class IndexController {
   constructor(router) {
@@ -23,13 +24,14 @@ export default class IndexController {
     }
 
     let user = Buffer.from(queryU, 'base64').toString()
+    let userConfig = conf[user];
 
-    if (!conf['source'][user]) {
+    if (!userConfig) {
       ctx.status = 401;
       return;
     }
 
-    let sourcePath = conf['source'][user]
+    let sourcePath = userConfig['source']
     let baseSurge = {}
 
     if (sourcePath.startsWith("http")) {
@@ -40,39 +42,32 @@ export default class IndexController {
       baseSurge = ini.parse(fs.readFileSync(sourceLocalPath, 'utf-8'))
     }
 
-    let remoteConfigs = conf['remote'][user];
+    let remoteConfigs = userConfig['remote'];
     let targetSurge = { ...baseSurge }
     let targeProxyGroup = targetSurge['Proxy Group']
     try {
-      for (let i = 0; i < remoteConfigs.length; i ++) {
-        let remoteConfig = remoteConfigs[i]
-        let remoteConfigName = remoteConfig['name']
-        let {data} = await axios(remoteConfig['url'])
-        let remoteSurge = ini.parse(data);
+      let proxyPromise = Promise.map(remoteConfigs, (remoteConfig) => 
+          Promise.resolve(axios(remoteConfig['url']))
+                 .then(item => ini.parse(item.data))
+                 .then((remoteSurge) => (targeProxyGroup[remoteConfig['name']] = this.bumpProxyGroup(remoteSurge['Proxy']), remoteSurge))
+      )
+      .reduce((targetProxy, remoteSurge) => this.bumpProxy(targetProxy, remoteSurge['Proxy']), targetSurge['Proxy'])
 
-        targetSurge['Proxy'] = this.bumpProxy(targetSurge['Proxy'], remoteSurge['Proxy'])
-        // TODO 策略选择 不一定是 url-test
-        targeProxyGroup[remoteConfigName] = `url-test, ${this.bumpProxyGroup(remoteSurge['Proxy'])}, url = http://www.google.com/generate_204`
-    
-      }
-      
+      let gfwListPromise = Promise.resolve(
+        axios({
+          method:'get',
+          url:'https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt',
+          responseType:'stream'
+        })
+        .then(response => rules(response.data.pipe(base64.decode()), userConfig['proxyRule']))
+      )
+      .reduce((data, item) => (data[item] = null, data), {})
+
+      let [proxy, rule] = await Promise.all([proxyPromise, gfwListPromise])
+      targetSurge['Proxy'] = proxy
       targetSurge['Proxy Group'] = this.bumpRemoteGroupName(targeProxyGroup, remoteConfigs);
-      let gfwListResponse = await axios({
-        method:'get',
-        url:'https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt',
-        responseType:'stream'
-      })
-
-      if (gfw) {
-        let rule = await rules(gfwListResponse.data.pipe(base64.decode()), 'Proxy')
-        rule = rule.reduce((map, item) => {
-          map[item] = null
-          return map
-        }, {})
-
-        targetSurge['Rule'] = rule
-      }
-
+      targetSurge['Rule'] = rule
+      
     } catch(e) {
       console.error(e);
     }
@@ -89,8 +84,7 @@ export default class IndexController {
     }
     return target
   }
-
-
+  
   bumpProxy = (base, proxy) => {
     let target = {...base}
     for (const proxyName in proxy ) {
@@ -99,7 +93,5 @@ export default class IndexController {
     return target;
   }
 
-  bumpProxyGroup = (proxies) => {
-    return Object.keys(proxies).join(",")
-  }
+  bumpProxyGroup = (proxies) => `url-test, ${Object.keys(proxies).join(",")}, url = http://www.google.com/generate_204`
 }
