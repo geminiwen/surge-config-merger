@@ -6,7 +6,8 @@ import fs from 'fs'
 import path from 'path'
 
 
-let forceRemoteDns = fs.readFileSync(path.resolve(__dirname, "../surge", "./remote-dns.txt"), "utf-8").split("\n")
+let forceRemoteDns = fs.readFileSync(path.resolve(__dirname, "../surge", "./remote-dns.txt"), "utf-8")
+    .split("\n")
     .reduce((array,item) => {
         let domain = item.trim();
         if (!domain.startsWith('#') && domain.length > 0) {
@@ -18,8 +19,12 @@ let forceRemoteDns = fs.readFileSync(path.resolve(__dirname, "../surge", "./remo
 function transformToSurge(rule) {
     return through2.obj(function(domain, enc, cb) {
         let shouldForceRemoteDns = forceRemoteDns.reduce((result, item) => (result || item.test(domain)), false)
-        this.push(`DOMAIN-SUFFIX,${domain},${rule}${shouldForceRemoteDns? ',force-remote-dns' : ''}`)
-        cb();
+        let record = [
+            'DOMAIN-SUFFIX', domain, rule 
+        ]
+
+        shouldForceRemoteDns && record.push['force-remote-dns']
+        cb(null, record.join(","));
     })
 }
 
