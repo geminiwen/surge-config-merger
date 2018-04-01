@@ -102,10 +102,14 @@ export default class IndexController {
   bumpProxy = (base, proxy) => {
     let target = {...base}
     for (const proxyName in proxy ) {
+      if (proxyName === 'DIRECT') continue;
       target[proxyName] = proxy[proxyName]
     }
     return target;
   }
 
-  bumpProxyGroup = (proxies) => `url-test, ${Object.keys(proxies).join(",")}, url = http://www.google.com/generate_204`
+  bumpProxyGroup = (proxies) => {
+    let withOutDirect = Object.keys(proxies).filter(proxy => proxy !== 'DIRECT')
+    return `url-test, ${withOutDirect.join(",")}, url = http://www.google.com/generate_204`
+  }
 }
