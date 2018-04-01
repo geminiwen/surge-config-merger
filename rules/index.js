@@ -31,7 +31,7 @@ function transformToSurge(rule) {
 module.exports = exports = function (source, rule) {
     let parser = new Parser();
     let group = [];
-    return new Promise(function (resolve, reject) {
+    return new Promise((resolve, reject) =>
         source
         .pipe(split2())
         .pipe(parser.process())
@@ -40,6 +40,6 @@ module.exports = exports = function (source, rule) {
         .on('data', Array.prototype.push.bind(group))
         .on('error', reject)
         .on('end', () => resolve(group))
-    })
+    )
 }
 
