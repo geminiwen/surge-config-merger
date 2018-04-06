@@ -18,13 +18,13 @@ function transformToSurge(rule) {
             return array
         }, [])
 
+
     return through2.obj(function(domain, enc, cb) {
         let shouldForceRemoteDns = forceRemoteDns.reduce((result, item) => (result || item.test(domain)), false)
         let record = [
             'DOMAIN-SUFFIX', domain, rule 
         ]
-
-        shouldForceRemoteDns && record.push['force-remote-dns']
+        shouldForceRemoteDns && record.push('force-remote-dns')
         cb(null, record.join(","));
     })
 }
