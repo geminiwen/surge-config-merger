@@ -2,7 +2,6 @@ import {auth} from '../middleware'
 import ini from '../lib/ini'
 import fs from 'fs'
 import path from 'path'
-import conf from '../conf'
 import axios from 'axios'
 import rules from '../rules'
 import base64 from 'base64-stream'
@@ -22,6 +21,8 @@ export default class IndexController {
       ctx.status = 401;
       return;
     }
+
+    let conf = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../conf.json"), "utf-8"))
 
     let user = Buffer.from(queryU, 'base64').toString()
     let userConfig = conf[user];
