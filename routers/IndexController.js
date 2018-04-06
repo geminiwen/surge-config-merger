@@ -46,12 +46,28 @@ export default class IndexController {
     let targetSurge = { ...baseSurge }
     let targeProxyGroup = targetSurge['Proxy Group']
     try {
-      let proxyPromise = Promise.map(remoteConfigs, (remoteConfig) => 
+      let proxyPromise = Promise.map(remoteConfigs, (remoteConfig, index, length) => 
           Promise.resolve(axios(remoteConfig['url']))
                  .then(item => ini.parse(item.data))
-                 .then((remoteSurge) => (targeProxyGroup[remoteConfig['name']] = this.bumpProxyGroup(remoteSurge['Proxy']), remoteSurge))
+                 .then((remoteSurge) => ({ name: remoteConfig['name'], config: remoteSurge }))
+                 .catch((e) => ({ name: remoteConfig['name'], config: {'Proxy': {}} }))
       )
-      .reduce((targetProxy, remoteSurge) => this.bumpProxy(targetProxy, remoteSurge['Proxy']), targetSurge['Proxy'])
+      .reduce((targetProxy, remoteSurge, index, length) => {
+        let {name, config} = remoteSurge
+        
+        let isLast = index == (length - 1)
+        if (Object.keys(config['Proxy']).length == 0) {
+          if (isLast) {
+            targeProxyGroup = this.clearProxyGroupHolder(targeProxyGroup)
+          }
+          return targetProxy;
+        }
+
+        targeProxyGroup[name] = this.bumpProxyGroup(config['Proxy']);
+        targeProxyGroup = this.joinProxyGroup(targeProxyGroup, name, isLast)
+
+        return this.bumpProxy(targetProxy, config['Proxy'])
+      }, targetSurge['Proxy'])
 
       let works = [proxyPromise]
       let originalRules = targetSurge['Rule']
@@ -75,7 +91,7 @@ export default class IndexController {
 
       let [proxy, rule] = await Promise.all(works)
       targetSurge['Proxy'] = proxy
-      targetSurge['Proxy Group'] = this.bumpRemoteGroupName(targeProxyGroup, remoteConfigs);
+      targetSurge['Proxy Group'] = targeProxyGroup
       targetSurge['Rule'] = rule
       
     } catch(e) {
@@ -89,14 +105,22 @@ export default class IndexController {
                ].join('')
   }
 
-  bumpRemoteGroupName = (base, configs) => {
-    let names = configs.map((e) => e.name).join(",");
+  joinProxyGroup = (base, configName, isLast) => {
     let target = {};
     for (const config in base) {
       let value = base[config];
-      target[config] = value.replace("${REMOTE}", names);
+      target[config] = value.replace("${REMOTE}", configName + (isLast ? "" : ",${REMOTE}"));
     }
     return target
+  }
+
+  clearProxyGroupHolder = (base) => {
+    let target = {};
+    for (const config in base) {
+      let value = base[config];
+      target[config] = value.replace(",${REMOTE}", "");
+    }
+    return target 
   }
   
   bumpProxy = (base, proxy) => {
