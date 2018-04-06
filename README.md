@@ -7,3 +7,7 @@ When you have multi proxy servers which provide surge managed configuration. You
 3. `node app.js`
 4. enter the URL `http://server/port/?u=BASE64(YOURNAME)`
 
+# Feature
+1. Custom ProxyName Filter
+2. Drop Proxy If Managed Config not work.
+3. Replace the placeholder to fix your policy
