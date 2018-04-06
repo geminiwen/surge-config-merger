@@ -47,6 +47,10 @@ export default class IndexController {
     let targetSurge = { ...baseSurge }
     let targeProxyGroup = targetSurge['Proxy Group']
     try {
+      let proxyFilterRules = fs.readFileSync(path.resolve(__dirname, '../surge/', './proxy-filter.txt'), 'utf-8')
+                               .split('\n')
+                               .map(item => new RegExp(item));
+
       let proxyPromise = Promise.map(remoteConfigs, (remoteConfig, index, length) => 
           Promise.resolve(axios(remoteConfig['url']))
                  .then(item => ini.parse(item.data))
@@ -64,10 +68,12 @@ export default class IndexController {
           return targetProxy;
         }
 
-        targeProxyGroup[name] = this.bumpProxyGroup(config['Proxy']);
+        let proxies = this.filterProxies(config['Proxy'], proxyFilterRules);
+
+        targeProxyGroup[name] = this.bumpProxyGroup(proxies);
         targeProxyGroup = this.joinProxyGroup(targeProxyGroup, name, isLast)
 
-        return this.bumpProxy(targetProxy, config['Proxy'])
+        return this.bumpProxy(targetProxy, proxies)
       }, targetSurge['Proxy'])
 
       let works = [proxyPromise]
@@ -124,17 +130,28 @@ export default class IndexController {
     return target 
   }
   
-  bumpProxy = (base, proxy) => {
+  bumpProxy = (base, proxies) => {
     let target = {...base}
-    for (const proxyName in proxy ) {
-      if (proxyName === 'DIRECT') continue;
-      target[proxyName] = proxy[proxyName]
+    for (const proxyName in proxies ) {
+      target[proxyName] = proxies[proxyName]
     }
     return target;
   }
 
-  bumpProxyGroup = (proxies) => {
-    let withOutDirect = Object.keys(proxies).filter(proxy => proxy !== 'DIRECT')
-    return `url-test, ${withOutDirect.join(",")}, url = http://www.google.com/generate_204`
+  filterProxies = (proxyData, filterRules = []) => {
+    let proxies = Object.keys(proxyData);
+    let target = {};
+
+    for (const proxyName in proxyData) {
+      let shouldFilter = filterRules.reduce((result, item) => (result || item.test(proxyName)), false)
+      if (shouldFilter) continue;
+      target[proxyName] = proxyData[proxyName]
+    }
+    return target;
+  }
+
+  bumpProxyGroup = (proxyData) => {
+    let proxies = Object.keys(proxyData);
+    return `url-test, ${proxies.join(",")}, url = http://www.google.com/generate_204`
   }
 }
