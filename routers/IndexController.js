@@ -50,7 +50,7 @@ export default class IndexController {
       let proxyFilterRules = fs.readFileSync(path.resolve(__dirname, '../surge/', './proxy-filter.txt'), 'utf-8')
                                .split('\n')
                                .filter(item => item.trim().length > 0)
-                               .map(item => new RegExp(item));
+                               .map(item => new RegExp(item.trim()));
 
       let proxyPromise = Promise.map(remoteConfigs, (remoteConfig, index, length) => 
           Promise.resolve(axios(remoteConfig['url']))
