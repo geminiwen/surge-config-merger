@@ -90,7 +90,10 @@ export default class IndexController {
           .then(response => rules(response.data.pipe(base64.decode()), userConfig['proxyRule']))
         )
         .reduce((data, item) => (data[item] = null, data), {})
-        .then(rules => ({...rules, ...originalRules}))
+        .then(rules => {
+          let combined =  {...rules, ...originalRules}
+          return combined
+        })
 
         works.push(gfwListPromise)
       } else {

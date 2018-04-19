@@ -1,16 +1,16 @@
-export default {
-    "MANAGED-CONFIG": "https://localhost/surge.conf",
-    "host": "127.0.0.1",
-    "port": 9991,
-    "gemini": {
-      "source": "Anti-GFW.conf",
-      "remote": [{
-        "name": "CordCloud",
+{
+  "MANAGED-CONFIG": "https://localhost/surge.conf",
+  "host": "127.0.0.1",
+  "port": 9991,
+  "gemini": {
+    "source": "Anti-GFW.conf",
+    "remote": [{
+      "name": "CordCloud",
+      "url": "https://www.example.com/surge.conf"
+    },{
+        "name": "XingXing",
         "url": "https://www.example.com/surge.conf"
-      },{
-          "name": "XingXing",
-          "url": "https://www.example.com/surge.conf"
-      }],
-      "proxyRule": "Proxy"
-    }
+    }],
+    "proxyRule": "Proxy"
   }
+}
