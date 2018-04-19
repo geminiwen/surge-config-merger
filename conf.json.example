@@ -11,6 +11,6 @@
         "name": "XingXing",
         "url": "https://www.example.com/surge.conf"
     }],
-    "proxyRule": "Proxy"
+    "proxyRule": "Proxy",
   }
 }

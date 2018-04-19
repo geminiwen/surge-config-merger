@@ -7,6 +7,8 @@ import rules from '../rules'
 import base64 from 'base64-stream'
 import Promise from 'bluebird'
 
+const REMOTE_PLACEHODLER = "${REMOTE}"
+
 export default class IndexController {
   constructor(router) {
     router.get("/", this.fetch)
@@ -91,7 +93,18 @@ export default class IndexController {
         )
         .reduce((data, item) => (data[item] = null, data), {})
         .then(rules => {
-          let combined =  {...rules, ...originalRules}
+          let prefixRule = {}, suffixRule = {}
+          Object.keys(originalRules).forEach(element => {
+            if (element.startsWith("DOMAIN-KEYWORD") || 
+                element.startsWith("DOMAIN-SUFFIX") ||
+                element.startsWith("DOMAIN")) {
+                prefixRule[element] = originalRules[element]
+            } else {
+                suffixRule[element] = originalRules[element]
+            }
+          });
+
+          let combined =  {...prefixRule, ...rules, ...suffixRule}
           return combined
         })
 
@@ -120,7 +133,7 @@ export default class IndexController {
     let target = {};
     for (const config in base) {
       let value = base[config];
-      target[config] = value.replace("${REMOTE}", configName + (isLast ? "" : ",${REMOTE}"));
+      target[config] = value.replace(REMOTE_PLACEHODLER, configName + (isLast ? "" : `,${REMOTE_PLACEHODLER}`));
     }
     return target
   }
@@ -129,7 +142,7 @@ export default class IndexController {
     let target = {};
     for (const config in base) {
       let value = base[config];
-      target[config] = value.replace(",${REMOTE}", "");
+      target[config] = value.replace(`,${REMOTE_PLACEHODLER}`, "");
     }
     return target 
   }
